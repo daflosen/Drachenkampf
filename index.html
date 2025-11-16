@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaPus Jump & Run - v0.3</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            color: white;
+        }
+        
+        .game-container {
+            text-align: center;
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+            color: #00d4ff;
+            text-shadow: 0 0 10px #00d4ff;
+        }
+        
+        canvas {
+            border: 3px solid #00d4ff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+            background: #87CEEB;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .hud {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 212, 255, 0.2);
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-around;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+        
+        .hud-item {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .hud-item span {
+            color: #00d4ff;
+            font-size: 24px;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            display: inline-block;
+        }
+        
+        .controls h3 {
+            margin-bottom: 10px;
+            color: #00d4ff;
+        }
+        
+        .controls p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .key {
+            display: inline-block;
+            background: #00d4ff;
+            color: #1a1a2e;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 0 3px;
+        }
+        
+        #levelComplete, #gameOver {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            border: 3px solid #00d4ff;
+            z-index: 1000;
+        }
+        
+        #characterSelect {
+            display: block; /* Charakterauswahl AKTIV */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            border: 3px solid #00d4ff;
+            z-index: 1000;
+            max-width: 900px;
+        }
+        
+        .character-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .character-card {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .character-card:hover {
+            background: rgba(0, 212, 255, 0.3);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+        
+        .character-preview {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 15px;
+            position: relative;
+        }
+        
+        .character-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+        
+        .character-stats {
+            text-align: left;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+        
+        .stat-bar {
+            margin: 5px 0;
+        }
+        
+        .stat-label {
+            color: #aaa;
+        }
+        
+        #characterSelect {
+            display: block;
+            min-width: 700px;
+        }
+        
+        .character-grid {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        
+        .character-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid #00d4ff;
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 200px;
+        }
+        
+        .character-card:hover {
+            transform: translateY(-10px);
+            border-color: #00ff88;
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.5);
+        }
+        
+        .character-preview {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .character-name {
+            font-size: 22px;
+            font-weight: bold;
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+        
+        .character-stats {
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        
+        .stat-bar {
+            background: rgba(255, 255, 255, 0.2);
+            height: 8px;
+            border-radius: 4px;
+            margin: 5px 0;
+            overflow: hidden;
+        }
+        
+        .stat-fill {
+            background: #00d4ff;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .modal-button {
+            background: #00d4ff;
+            color: #1a1a2e;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .modal-button:hover {
+            background: #00a8cc;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🎮 MaPus Jump & Run - v0.3</h1>
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+        
+        <div class="hud">
+            <div class="hud-item">🎯 Level: <span id="levelNum">1</span></div>
+            <div class="hud-item">💰 Münzen: <span id="coinCount">0</span></div>
+            <div class="hud-item">❤️ Leben: <span id="lifeCount">3</span></div>
+            <div class="hud-item">⚔️ Kills: <span id="killCount">0</span></div>
+        </div>
+        
+        <div class="controls">
+            <h3>Steuerung:</h3>
+            <p><span class="key">←</span> <span class="key">→</span> Laufen | <span class="key">LEERTASTE</span> Springen | <span class="key">X</span> Attacke</p>
+            <p style="margin-top: 15px; font-size: 12px; opacity: 0.7;">v0.3 - 5 Level System!</p>
+        </div>
+    </div>
+    
+    <div id="characterSelect" style="display: block;">
+        <h2 style="color: #00d4ff; margin-bottom: 10px; font-size: 32px;">⚔️ Wähle deinen Charakter</h2>
+        <p style="opacity: 0.8; margin-bottom: 20px;">Jeder Charakter hat einzigartige Fähigkeiten!</p>
+        
+        <div style="display: flex; gap: 30px; justify-content: center;">
+            <!-- KRIEGER -->
+            <div style="background: rgba(0, 212, 255, 0.1); border: 2px solid #00d4ff; border-radius: 15px; padding: 20px; width: 250px; cursor: pointer; transition: all 0.3s;" 
+                 onclick="startGame('warrior')"
+                 onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 20px rgba(0, 212, 255, 0.5)';"
+                 onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">
+                <div style="font-size: 32px; margin-bottom: 10px;">🗡️</div>
+                <div style="font-size: 24px; font-weight: bold; color: #00d4ff; margin-bottom: 15px;">KRIEGER</div>
+                <div style="text-align: left; font-size: 14px;">
+                    <div style="margin: 8px 0;">
+                        <div>Geschwindigkeit: ⭐⭐⭐</div>
+                        <div style="background: rgba(255,255,255,0.2); height: 6px; border-radius: 3px; margin-top: 3px;">
+                            <div style="background: #00d4ff; height: 100%; width: 60%; border-radius: 3px;"></div>
+                        </div>
+                    </div>
+                    <div style="margin: 8px 0;">
+                        <div>Sprung: ⭐⭐⭐</div>
+                        <div style="background: rgba(255,255,255,0.2); height: 6px; border-radius: 3px; margin-top: 3px;">
+                            <div style="background: #00d4ff; height: 100%; width: 60%; border-radius: 3px;"></div>
+                        </div>
+                    </div>
+                    <div style="margin: 8px 0;">
+                        <div>Angriff: ⭐⭐⭐⭐⭐</div>
+                        <div style="background: rgba(255,255,255,0.2); height: 6px; border-radius: 3px; margin-top: 3px;">
+                            <div style="background: #ff4444; height: 100%; width: 100%; border-radius: 3px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- NINJA -->
+            <div style="background: rgba(0, 212, 255, 0.1); border: 2px solid #00d4ff; border-radius: 15px; padding: 20px; width: 250px; cursor: pointer; transition: all 0.3s;" 
+                 onclick="startGame('ninja')"
+                 onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 20px rgba(0, 212, 255, 0.5)';"
+                 onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">
+                <div style="font-size: 32px; margin-bottom: 10px;">🥷</div>
+                <div style="font-size: 24px; font-weight: bold; color: #00d4ff; margin-bottom: 15px;">NINJA</div>
+                <div style="text-align: left; font-size: 14px;">
+                    <div style="margin: 8px 0;">
+                        <div>Geschwindigkeit: ⭐⭐⭐⭐⭐</div>
+                        <div style="background: rgba(255,255,255,0.2); height: 6px; border-radius: 3px; margin-top: 3px;">
+                            <div style="background: #44ff44; height: 100%; width: 100%; border-radius: 3px;"></div>
+                        </div>
+                    </div>
+                    <div style="margin: 8px 0;">
+                        <div>Sprung: ⭐⭐⭐⭐⭐</div>
+                        <div style="background: rgba(255,255,255,0.2); height: 6px; border-radius: 3px; margin-top: 3px;">
+                            <div style="background: #44ff44; height: 100%; width: 100%; border-radius: 3px;"></div>
+                        </div>
+                    </div>
+                    <div style="margin: 8px 0;">
+                        <div>Angriff: ⭐⭐</div>
+                        <div style="background: rgba(255,255,255,0.2); height: 6px; border-radius: 3px; margin-top: 3px;">
+                            <div style="background: #ff8844; height: 100%; width: 40%; border-radius: 3px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- MAGIER -->
+            <div style="background: rgba(0, 212, 255, 0.1); border: 2px solid #00d4ff; border-radius: 15px; padding: 20px; width: 250px; cursor: pointer; transition: all 0.3s;" 
+                 onclick="startGame('mage')"
+                 onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 20px rgba(0, 212, 255, 0.5)';"
+                 onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">
+                <div style="font-size: 32px; margin-bottom: 10px;">🔮</div>
+                <div style="font-size: 24px; font-weight: bold; color: #00d4ff; margin-bottom: 15px;">MAGIER</div>
+                <div style="text-align: left; font-size: 14px;">
+                    <div style="margin: 8px 0;">
+                        <div>Geschwindigkeit: ⭐⭐</div>
+                        <div style="background: rgba(255,255,255,0.2); height: 6px; border-radius: 3px; margin-top: 3px;">
+                            <div style="background: #ff8844; height: 100%; width: 40%; border-radius: 3px;"></div>
+                        </div>
+                    </div>
+                    <div style="margin: 8px 0;">
+                        <div>Sprung: ⭐⭐⭐</div>
+                        <div style="background: rgba(255,255,255,0.2); height: 6px; border-radius: 3px; margin-top: 3px;">
+                            <div style="background: #00d4ff; height: 100%; width: 60%; border-radius: 3px;"></div>
+                        </div>
+                    </div>
+                    <div style="margin: 8px 0;">
+                        <div>Reichweite: ⭐⭐⭐⭐</div>
+                        <div style="background: rgba(255,255,255,0.2); height: 6px; border-radius: 3px; margin-top: 3px;">
+                            <div style="background: #ffaa00; height: 100%; width: 80%; border-radius: 3px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="levelComplete">
+        <h2 style="color: #00d4ff; margin-bottom: 20px;">🎉 Level Geschafft!</h2>
+        <p style="margin-bottom: 20px; font-size: 18px;">Münzen gesammelt: <span id="levelCoins">0</span></p>
+        <button class="modal-button" id="nextLevelBtn">Nächstes Level →</button>
+    </div>
+    
+    <div id="gameOver">
+        <h2 style="color: #ff4444; margin-bottom: 20px;">💀 Game Over</h2>
+        <p style="margin-bottom: 20px;">Erreichtes Level: <span id="finalLevel">0</span></p>
+        <p style="margin-bottom: 20px;">Gesamt Münzen: <span id="finalCoins">0</span></p>
+        <button class="modal-button" onclick="location.reload()">Nochmal versuchen</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Character Types
+        const characterTypes = {
+            warrior: {
+                name: 'Krieger',
+                color: '#DC143C',
+                speed: 5,
+                jumpPower: 12,
+                attackRange: 12,
+                attackDuration: 15
+            },
+            ninja: {
+                name: 'Ninja',
+                color: '#4B0082',
+                speed: 7,
+                jumpPower: 15,
+                attackRange: 10,
+                attackDuration: 10
+            },
+            mage: {
+                name: 'Magier',
+                color: '#4169E1',
+                speed: 4,
+                jumpPower: 12,
+                attackRange: 20,
+                attackDuration: 20
+            }
+        };
+        
+        let selectedCharacter = 'warrior'; // SOFORT auf warrior setzen!
+        
+        // Game State
+        const game = {
+            running: false,
+            gravity: 0.6,
+            keys: {},
+            currentLevel: 1,
+            totalCoins: 0,
+            lives: 3,
+            kills: 0
+        };
+        
+        // Player Object
+        const player = {
+            x: 50,
+            y: 100,
+            width: 32,
+            height: 32,
+            velocityX: 0,
+            velocityY: 0,
+            speed: 5,
+            jumpPower: 12,
+            onGround: false,
+            color: '#DC143C',
+            attacking: false,
+            attackCooldown: 0,
+            attackDuration: 15,
+            attackRange: 12,
+            facingRight: true,
+            invincible: false,
+            invincibleTime: 0
+        };
+        
+        // Level Definitions
+        const levels = {
+            1: {
+                name: "Anfang",
+                platforms: [
+                    { x: 200, y: 280, width: 150, height: 20 },
+                    { x: 400, y: 220, width: 120, height: 20 },
+                    { x: 600, y: 160, width: 100, height: 20 }
+                ],
+                pits: [
+                    { x: 350, width: 50 } // Grube zwischen ersten Plattformen
+                ],
+                coins: [
+                    { x: 250, y: 240 },
+                    { x: 450, y: 180 },
+                    { x: 650, y: 120 },
+                    { x: 150, y: 310 }
+                ],
+                enemies: [
+                    { x: 350, y: 250, velocityX: 2, minX: 200, maxX: 500, type: 'baby', health: 1 },
+                    { x: 500, y: 190, velocityX: -1.5, minX: 400, maxX: 650, type: 'baby', health: 1 }
+                ]
+            },
+            2: {
+                name: "Hügelland",
+                platforms: [
+                    { x: 150, y: 300, width: 100, height: 20 },
+                    { x: 300, y: 250, width: 80, height: 20 },
+                    { x: 450, y: 200, width: 100, height: 20 },
+                    { x: 600, y: 150, width: 80, height: 20 },
+                    { x: 700, y: 250, width: 90, height: 20 }
+                ],
+                pits: [
+                    { x: 250, width: 50 },
+                    { x: 380, width: 70 }
+                ],
+                coins: [
+                    { x: 180, y: 260 },
+                    { x: 320, y: 210 },
+                    { x: 480, y: 160 },
+                    { x: 630, y: 110 },
+                    { x: 730, y: 210 },
+                    { x: 100, y: 310 }
+                ],
+                enemies: [
+                    { x: 150, y: 270, velocityX: 1.5, minX: 150, maxX: 250, type: 'baby', health: 1 },
+                    { x: 450, y: 170, velocityX: -2, minX: 450, maxX: 550, type: 'young', health: 2 },
+                    { x: 700, y: 220, velocityX: 1, minX: 700, maxX: 790, type: 'baby', health: 1 }
+                ]
+            },
+            3: {
+                name: "Höhlen",
+                platforms: [
+                    { x: 100, y: 320, width: 120, height: 20 },
+                    { x: 250, y: 270, width: 60, height: 20 },
+                    { x: 350, y: 220, width: 60, height: 20 },
+                    { x: 450, y: 170, width: 100, height: 20 },
+                    { x: 600, y: 220, width: 80, height: 20 },
+                    { x: 700, y: 300, width: 90, height: 20 }
+                ],
+                pits: [
+                    { x: 220, width: 30 },
+                    { x: 410, width: 40 },
+                    { x: 680, width: 20 }
+                ],
+                coins: [
+                    { x: 130, y: 280 },
+                    { x: 260, y: 230 },
+                    { x: 360, y: 180 },
+                    { x: 480, y: 130 },
+                    { x: 630, y: 180 },
+                    { x: 730, y: 260 },
+                    { x: 50, y: 310 }
+                ],
+                enemies: [
+                    { x: 100, y: 290, velocityX: 2, minX: 100, maxX: 220, type: 'young', health: 2 },
+                    { x: 350, y: 190, velocityX: -1.5, minX: 350, maxX: 410, type: 'young', health: 2 },
+                    { x: 450, y: 140, velocityX: 2.5, minX: 450, maxX: 550, type: 'adult', health: 3 },
+                    { x: 700, y: 270, velocityX: -1, minX: 700, maxX: 790, type: 'baby', health: 1 }
+                ]
+            },
+            4: {
+                name: "Ruinen",
+                platforms: [
+                    { x: 80, y: 310, width: 100, height: 20 },
+                    { x: 220, y: 260, width: 70, height: 20 },
+                    { x: 330, y: 200, width: 80, height: 20 },
+                    { x: 450, y: 150, width: 60, height: 20 },
+                    { x: 550, y: 200, width: 70, height: 20 },
+                    { x: 650, y: 260, width: 80, height: 20 },
+                    { x: 740, y: 310, width: 60, height: 20 }
+                ],
+                pits: [
+                    { x: 180, width: 40 },
+                    { x: 290, width: 40 },
+                    { x: 410, width: 40 },
+                    { x: 620, width: 30 }
+                ],
+                coins: [
+                    { x: 110, y: 270 },
+                    { x: 240, y: 220 },
+                    { x: 360, y: 160 },
+                    { x: 470, y: 110 },
+                    { x: 570, y: 160 },
+                    { x: 680, y: 220 },
+                    { x: 760, y: 270 },
+                    { x: 30, y: 310 }
+                ],
+                enemies: [
+                    { x: 80, y: 280, velocityX: 2, minX: 80, maxX: 180, type: 'young', health: 2 },
+                    { x: 330, y: 170, velocityX: -2, minX: 330, maxX: 410, type: 'adult', health: 3 },
+                    { x: 450, y: 120, velocityX: 2.5, minX: 450, maxX: 510, type: 'adult', health: 3 },
+                    { x: 650, y: 230, velocityX: -2, minX: 650, maxX: 730, type: 'young', health: 2 },
+                    { x: 200, y: 310, velocityX: 3, minX: 0, maxX: 400, type: 'adult', health: 3 }
+                ]
+            },
+            5: {
+                name: "Boss Arena",
+                platforms: [
+                    { x: 50, y: 320, width: 120, height: 20 },
+                    { x: 200, y: 250, width: 100, height: 20 },
+                    { x: 350, y: 180, width: 100, height: 20 },
+                    { x: 500, y: 250, width: 100, height: 20 },
+                    { x: 650, y: 320, width: 120, height: 20 }
+                ],
+                pits: [
+                    { x: 170, width: 30 },
+                    { x: 300, width: 50 },
+                    { x: 450, width: 50 },
+                    { x: 600, width: 50 }
+                ],
+                coins: [
+                    { x: 80, y: 280 },
+                    { x: 230, y: 210 },
+                    { x: 380, y: 140 },
+                    { x: 530, y: 210 },
+                    { x: 680, y: 280 },
+                    { x: 400, y: 310 },
+                    { x: 100, y: 310 },
+                    { x: 700, y: 310 }
+                ],
+                enemies: [
+                    { x: 200, y: 220, velocityX: 2.5, minX: 200, maxX: 300, type: 'adult', health: 3 },
+                    { x: 500, y: 220, velocityX: -2.5, minX: 500, maxX: 600, type: 'adult', health: 3 },
+                    { x: 350, y: 150, velocityX: 3, minX: 350, maxX: 450, type: 'elder', health: 4 },
+                    { x: 100, y: 290, velocityX: 2, minX: 50, maxX: 170, type: 'adult', health: 3 },
+                    { x: 650, y: 290, velocityX: -2, minX: 650, maxX: 770, type: 'adult', health: 3 },
+                    { x: 400, y: 310, velocityX: 2.5, minX: 250, maxX: 550, type: 'elder', health: 4 }
+                ]
+            }
+        };
+        
+        // Current Level Data
+        let ground, platforms, coins, enemies, pits;
+        let projectiles = []; // Ninja-Wurfsterne
+        
+        // Ground
+        function initGround() {
+            ground = {
+                x: 0,
+                y: 350,
+                width: canvas.width,
+                height: 50
+            };
+        }
+        
+        // Load Level
+        function loadLevel(levelNum) {
+            const levelData = levels[levelNum];
+            if (!levelData) {
+                // Game Won!
+                alert('🎉 Glückwunsch! Du hast alle 5 Level geschafft!\n\nGesamt Münzen: ' + game.totalCoins + '\nGesamt Kills: ' + game.kills);
+                location.reload();
+                return;
+            }
+            
+            // Reset player position
+            player.x = 50;
+            player.y = 100;
+            player.velocityX = 0;
+            player.velocityY = 0;
+            
+            // Load platforms
+            platforms = levelData.platforms.map(p => ({...p}));
+            
+            // Load pits
+            pits = levelData.pits ? levelData.pits.map(p => ({
+                x: p.x,
+                y: ground.y,
+                width: p.width,
+                height: ground.height
+            })) : [];
+            
+            // Load coins
+            coins = levelData.coins.map(c => ({
+                x: c.x,
+                y: c.y,
+                width: 16,
+                height: 16,
+                collected: false
+            }));
+            
+            // Load enemies with type and health
+            enemies = levelData.enemies.map(e => ({
+                x: e.x,
+                y: e.y,
+                width: 24,
+                height: 24,
+                velocityX: e.velocityX,
+                alive: true,
+                minX: e.minX,
+                maxX: e.maxX,
+                type: e.type,
+                health: e.health,
+                maxHealth: e.health
+            }));
+            
+            // Lösche alle Projektile beim Level-Wechsel
+            projectiles = [];
+            
+            // Update HUD
+            document.getElementById('levelNum').textContent = levelNum;
+            
+            game.running = true;
+        }
+        
+        // Check Level Complete
+        function checkLevelComplete() {
+            const allCoinsCollected = coins.every(c => c.collected);
+            const allEnemiesDefeated = enemies.every(e => !e.alive);
+            
+            if (allCoinsCollected && allEnemiesDefeated) {
+                game.running = false;
+                document.getElementById('levelCoins').textContent = coins.length;
+                document.getElementById('levelComplete').style.display = 'block';
+            }
+        }
+        
+        // Next Level (global für onclick)
+        
+        // Input Handling
+        document.addEventListener('keydown', (e) => {
+            if (!game.keys[e.code]) {
+                game.keys[e.code] = true;
+                
+                if (e.code === 'KeyX' && !player.attacking && player.attackCooldown === 0) {
+                    // Ninja wirft Wurfster
+                    if (selectedCharacter === 'ninja') {
+                        projectiles.push({
+                            x: player.facingRight ? player.x + player.width : player.x,
+                            y: player.y + 12,
+                            width: 8,
+                            height: 8,
+                            velocityX: player.facingRight ? 10 : -10,
+                            rotation: 0,
+                            active: true
+                        });
+                        player.attackCooldown = player.attackDuration;
+                    } else {
+                        // Krieger und Magier: Normaler Nahkampf
+                        player.attacking = true;
+                        player.attackCooldown = player.attackDuration;
+                    }
+                }
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            game.keys[e.code] = false;
+        });
+        
+        // Collision Detection
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                   rect1.x + rect1.width > rect2.x &&
+                   rect1.y < rect2.y + rect2.height &&
+                   rect1.y + rect1.height > rect2.y;
+        }
+        
+        // Update Player
+        function updatePlayer() {
+            if (game.keys['ArrowLeft']) {
+                player.velocityX = -player.speed;
+                player.facingRight = false;
+            } else if (game.keys['ArrowRight']) {
+                player.velocityX = player.speed;
+                player.facingRight = true;
+            } else {
+                player.velocityX = 0;
+            }
+            
+            if (game.keys['Space'] && player.onGround) {
+                player.velocityY = -player.jumpPower;
+                player.onGround = false;
+            }
+            
+            player.velocityY += game.gravity;
+            player.x += player.velocityX;
+            player.y += player.velocityY;
+            
+            if (checkCollision(player, ground)) {
+                player.y = ground.y - player.height;
+                player.velocityY = 0;
+                player.onGround = true;
+            } else {
+                player.onGround = false;
+            }
+            
+            platforms.forEach(platform => {
+                if (checkCollision(player, platform)) {
+                    if (player.velocityY > 0 && player.y + player.height - player.velocityY <= platform.y) {
+                        player.y = platform.y - player.height;
+                        player.velocityY = 0;
+                        player.onGround = true;
+                    }
+                }
+            });
+            
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) {
+                player.x = canvas.width - player.width;
+            }
+            
+            if (player.attackCooldown > 0) {
+                player.attackCooldown--;
+                if (player.attackCooldown === 0) {
+                    player.attacking = false;
+                }
+            }
+            
+            // Invincibility timer
+            if (player.invincibleTime > 0) {
+                player.invincibleTime--;
+                if (player.invincibleTime === 0) {
+                    player.invincible = false;
+                }
+            }
+            
+            // Check pit collision
+            pits.forEach(pit => {
+                if (checkCollision(player, pit) && !player.invincible) {
+                    // Player fällt in Grube
+                    game.lives--;
+                    document.getElementById('lifeCount').textContent = game.lives;
+                    
+                    // Reset player
+                    player.x = 50;
+                    player.y = 100;
+                    player.velocityX = 0;
+                    player.velocityY = 0;
+                    player.invincible = true;
+                    player.invincibleTime = 60;
+                    
+                    if (game.lives <= 0) {
+                        game.running = false;
+                        document.getElementById('finalLevel').textContent = game.currentLevel;
+                        document.getElementById('finalCoins').textContent = game.totalCoins;
+                        document.getElementById('gameOver').style.display = 'block';
+                    }
+                }
+            });
+        }
+        
+        // Update Coins
+        function updateCoins() {
+            coins.forEach(coin => {
+                if (!coin.collected && checkCollision(player, coin)) {
+                    coin.collected = true;
+                    game.totalCoins++;
+                    document.getElementById('coinCount').textContent = game.totalCoins;
+                }
+            });
+        }
+        
+        // Update Projectiles (Ninja Sterne)
+        function updateProjectiles() {
+            projectiles.forEach((proj, index) => {
+                if (!proj.active) return;
+                
+                // Bewege Wurfster
+                proj.x += proj.velocityX;
+                proj.rotation += 20; // Rotation für Spinning-Effekt
+                
+                // Entferne wenn außerhalb des Bildschirms
+                if (proj.x < -20 || proj.x > canvas.width + 20) {
+                    proj.active = false;
+                    projectiles.splice(index, 1);
+                    return;
+                }
+                
+                // Prüfe Kollision mit Gegnern
+                enemies.forEach(enemy => {
+                    if (!enemy.alive) return;
+                    
+                    if (checkCollision(proj, enemy)) {
+                        enemy.health--;
+                        if (enemy.health <= 0) {
+                            enemy.alive = false;
+                            game.kills++;
+                            document.getElementById('killCount').textContent = game.kills;
+                        }
+                        proj.active = false;
+                        projectiles.splice(index, 1);
+                    }
+                });
+            });
+        }
+        
+        // Update Enemies
+        function updateEnemies() {
+            enemies.forEach(enemy => {
+                if (!enemy.alive) return;
+                
+                enemy.x += enemy.velocityX;
+                
+                if (enemy.x <= enemy.minX || enemy.x >= enemy.maxX) {
+                    enemy.velocityX *= -1;
+                }
+                
+                // Check attack collision with extended range
+                let attackHit = false;
+                if (player.attacking) {
+                    const attackBox = {
+                        x: player.facingRight ? player.x + player.width : player.x - player.attackRange,
+                        y: player.y,
+                        width: player.attackRange,
+                        height: player.height
+                    };
+                    attackHit = checkCollision(attackBox, enemy);
+                }
+                
+                if (checkCollision(player, enemy) || attackHit) {
+                    if (player.attacking && attackHit) {
+                        enemy.health--;
+                        if (enemy.health <= 0) {
+                            enemy.alive = false;
+                            game.kills++;
+                            document.getElementById('killCount').textContent = game.kills;
+                        }
+                        player.attacking = false;
+                        player.attackCooldown = 0;
+                    } else if (checkCollision(player, enemy) && !player.invincible) {
+                        game.lives--;
+                        document.getElementById('lifeCount').textContent = game.lives;
+                        
+                        player.x = 50;
+                        player.y = 100;
+                        player.velocityX = 0;
+                        player.velocityY = 0;
+                        player.invincible = true;
+                        player.invincibleTime = 60;
+                        
+                        if (game.lives <= 0) {
+                            game.running = false;
+                            document.getElementById('finalLevel').textContent = game.currentLevel;
+                            document.getElementById('finalCoins').textContent = game.totalCoins;
+                            document.getElementById('gameOver').style.display = 'block';
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Draw Functions
+        function drawPlayer() {
+            // Blink when invincible
+            if (player.invincible && Math.floor(player.invincibleTime / 5) % 2 === 0) {
+                return; // Don't draw player (blinking effect)
+            }
+            
+            const px = player.x;
+            const py = player.y;
+            
+            if (selectedCharacter === 'warrior') {
+                // RITTER
+                // Körper (rot)
+                ctx.fillStyle = player.color;
+                ctx.fillRect(px, py + 12, player.width, 20);
+                
+                // Helm (silber)
+                ctx.fillStyle = '#C0C0C0';
+                ctx.fillRect(px, py, player.width, 12);
+                
+                // Helm-Spitze
+                ctx.fillRect(px + 10, py - 4, 12, 4);
+                
+                // Visier (dunkel)
+                ctx.fillStyle = '#333';
+                ctx.fillRect(px + 4, py + 4, 24, 6);
+                
+                // Augen (rot durch Visier)
+                ctx.fillStyle = '#FF0000';
+                if (player.facingRight) {
+                    ctx.fillRect(px + 18, py + 6, 4, 2);
+                    ctx.fillRect(px + 24, py + 6, 4, 2);
+                } else {
+                    ctx.fillRect(px + 4, py + 6, 4, 2);
+                    ctx.fillRect(px + 10, py + 6, 4, 2);
+                }
+                
+            } else if (selectedCharacter === 'ninja') {
+                // NINJA (bleibt wie vorher)
+                ctx.fillStyle = player.color;
+                ctx.fillRect(px, py, player.width, player.height);
+                
+                ctx.fillStyle = '#FFD700';
+                if (player.facingRight) {
+                    ctx.fillRect(px + 18, py + 10, 4, 4);
+                    ctx.fillRect(px + 26, py + 10, 4, 4);
+                } else {
+                    ctx.fillRect(px + 2, py + 10, 4, 4);
+                    ctx.fillRect(px + 10, py + 10, 4, 4);
+                }
+                
+            } else if (selectedCharacter === 'mage') {
+                // MAGIER MIT SPITZHUT
+                // Körper (blau)
+                ctx.fillStyle = player.color;
+                ctx.fillRect(px, py + 12, player.width, 20);
+                
+                // Kopf (haut)
+                ctx.fillStyle = '#FFD4A3';
+                ctx.fillRect(px + 4, py, 24, 12);
+                
+                // Augen
+                ctx.fillStyle = '#000';
+                if (player.facingRight) {
+                    ctx.fillRect(px + 14, py + 6, 4, 4);
+                    ctx.fillRect(px + 22, py + 6, 4, 4);
+                } else {
+                    ctx.fillRect(px + 6, py + 6, 4, 4);
+                    ctx.fillRect(px + 14, py + 6, 4, 4);
+                }
+                
+                // Spitzer Zauberhut (lila)
+                ctx.fillStyle = '#8B008B';
+                ctx.fillRect(px + 8, py - 4, 16, 4); // Krempe
+                ctx.fillRect(px + 10, py - 8, 12, 4);
+                ctx.fillRect(px + 12, py - 12, 8, 4);
+                ctx.fillRect(px + 14, py - 16, 4, 4);
+                
+                // Sterne auf Hut
+                ctx.fillStyle = '#FFD700';
+                ctx.fillRect(px + 14, py - 6, 2, 2);
+                ctx.fillRect(px + 18, py - 10, 2, 2);
+                
+            } else {
+                // Fallback (Standard-Rechteck)
+                ctx.fillStyle = player.color;
+                ctx.fillRect(px, py, player.width, player.height);
+                
+                ctx.fillStyle = '#000';
+                if (player.facingRight) {
+                    ctx.fillRect(px + 18, py + 10, 4, 4);
+                    ctx.fillRect(px + 26, py + 10, 4, 4);
+                } else {
+                    ctx.fillRect(px + 2, py + 10, 4, 4);
+                    ctx.fillRect(px + 10, py + 10, 4, 4);
+                }
+            }
+            
+            if (player.attacking) {
+                // Different attack visuals per character
+                if (selectedCharacter === 'warrior') {
+                    // GROSSES RITTER-SCHWERT
+                    const swordX = player.facingRight ? player.x + player.width : player.x - player.attackRange;
+                    const swordY = player.y + 8;
+                    
+                    if (player.facingRight) {
+                        // Klinge (silber)
+                        ctx.fillStyle = '#E0E0E0';
+                        ctx.fillRect(swordX, swordY, player.attackRange, 4);
+                        ctx.fillRect(swordX, swordY - 2, player.attackRange - 2, 2);
+                        ctx.fillRect(swordX, swordY + 4, player.attackRange - 2, 2);
+                        
+                        // Spitze
+                        ctx.fillRect(swordX + player.attackRange, swordY + 1, 2, 2);
+                        
+                        // Glanz
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(swordX + 2, swordY + 1, 2, 2);
+                        
+                        // Griff (braun/gold)
+                        ctx.fillStyle = '#8B4513';
+                        ctx.fillRect(swordX - 3, swordY - 1, 4, 6);
+                        
+                        // Parierstange (gold)
+                        ctx.fillStyle = '#FFD700';
+                        ctx.fillRect(swordX - 1, swordY - 3, 2, 10);
+                    } else {
+                        // Klinge (silber)
+                        ctx.fillStyle = '#E0E0E0';
+                        ctx.fillRect(swordX, swordY, player.attackRange, 4);
+                        ctx.fillRect(swordX + 2, swordY - 2, player.attackRange - 2, 2);
+                        ctx.fillRect(swordX + 2, swordY + 4, player.attackRange - 2, 2);
+                        
+                        // Spitze
+                        ctx.fillRect(swordX - 2, swordY + 1, 2, 2);
+                        
+                        // Glanz
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(swordX + player.attackRange - 4, swordY + 1, 2, 2);
+                        
+                        // Griff (braun/gold)
+                        ctx.fillStyle = '#8B4513';
+                        ctx.fillRect(swordX + player.attackRange - 1, swordY - 1, 4, 6);
+                        
+                        // Parierstange (gold)
+                        ctx.fillStyle = '#FFD700';
+                        ctx.fillRect(swordX + player.attackRange - 1, swordY - 3, 2, 10);
+                    }
+                } else if (selectedCharacter === 'ninja') {
+                    // Ninja wirft Sterne - keine Nahkampf-Animation
+                } else if (selectedCharacter === 'mage') {
+                    // Magischer Strahl
+                    ctx.fillStyle = '#FFD700';
+                    if (player.facingRight) {
+                        ctx.fillRect(player.x + player.width, player.y + 10, player.attackRange, 6);
+                        ctx.fillRect(player.x + player.width + 2, player.y + 8, 2, 2);
+                        ctx.fillRect(player.x + player.width + 10, player.y + 8, 2, 2);
+                        ctx.fillRect(player.x + player.width + 18, player.y + 8, 2, 2);
+                    } else {
+                        ctx.fillRect(player.x - player.attackRange, player.y + 10, player.attackRange, 6);
+                        ctx.fillRect(player.x - player.attackRange - 2, player.y + 8, 2, 2);
+                        ctx.fillRect(player.x - player.attackRange - 10, player.y + 8, 2, 2);
+                        ctx.fillRect(player.x - player.attackRange - 18, player.y + 8, 2, 2);
+                    }
+                }
+            }
+        }
+        
+        function drawCoins() {
+            coins.forEach(coin => {
+                if (!coin.collected) {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(coin.x, coin.y, coin.width, coin.height);
+                    ctx.fillStyle = '#FFA500';
+                    ctx.fillRect(coin.x + 2, coin.y + 2, coin.width - 4, coin.height - 4);
+                    ctx.fillStyle = '#FFFF00';
+                    ctx.fillRect(coin.x + 4, coin.y + 4, 4, 4);
+                }
+            });
+        }
+        
+        function drawEnemies() {
+            enemies.forEach(enemy => {
+                if (enemy.alive) {
+                    const facing = enemy.velocityX > 0 ? 1 : -1;
+                    const ex = enemy.x;
+                    const ey = enemy.y;
+                    
+                    // Different colors and sizes per type
+                    let bodyColor, headColor, detailColor, eyeColor, size;
+                    
+                    if (enemy.type === 'baby') {
+                        bodyColor = '#90EE90'; // Hellgrün
+                        headColor = '#98FB98';
+                        detailColor = '#228B22';
+                        eyeColor = '#FFD700'; // Gold
+                        size = 0.8;
+                    } else if (enemy.type === 'young') {
+                        bodyColor = '#228B22'; // Grün
+                        headColor = '#2E8B57';
+                        detailColor = '#006400';
+                        eyeColor = '#FFA500'; // Orange
+                        size = 1.0;
+                    } else if (enemy.type === 'adult') {
+                        bodyColor = '#006400'; // Dunkelgrün
+                        headColor = '#013220';
+                        detailColor = '#000000';
+                        eyeColor = '#FF4500'; // Rot-Orange
+                        size = 1.2;
+                    } else if (enemy.type === 'elder') {
+                        bodyColor = '#8B0000'; // Dunkelrot
+                        headColor = '#DC143C';
+                        detailColor = '#000000';
+                        eyeColor = '#FF0000'; // Rot
+                        size = 1.4;
+                    }
+                    
+                    const w = 24 * size;
+                    const h = 24 * size;
+                    const offsetX = (24 - w) / 2;
+                    const offsetY = (24 - h) / 2;
+                    
+                    // Körper
+                    ctx.fillStyle = bodyColor;
+                    ctx.fillRect(ex + 4 + offsetX, ey + 8 + offsetY, 16 * size, 12 * size);
+                    
+                    // Kopf
+                    ctx.fillStyle = headColor;
+                    ctx.fillRect(ex + (facing > 0 ? 16 : 4) + offsetX, ey + 4 + offsetY, 8 * size, 8 * size);
+                    
+                    // Schnauze
+                    ctx.fillStyle = detailColor;
+                    if (facing > 0) {
+                        ctx.fillRect(ex + 20 + offsetX, ey + 6 + offsetY, 4 * size, 4 * size);
+                    } else {
+                        ctx.fillRect(ex + offsetX, ey + 6 + offsetY, 4 * size, 4 * size);
+                    }
+                    
+                    // Auge
+                    ctx.fillStyle = eyeColor;
+                    if (facing > 0) {
+                        ctx.fillRect(ex + 18 + offsetX, ey + 5 + offsetY, 2 * size, 2 * size);
+                    } else {
+                        ctx.fillRect(ex + 4 + offsetX, ey + 5 + offsetY, 2 * size, 2 * size);
+                    }
+                    
+                    // Hörner (größer für stärkere Drachen)
+                    ctx.fillStyle = detailColor;
+                    if (facing > 0) {
+                        ctx.fillRect(ex + 16 + offsetX, ey + 2 + offsetY, 2 * size, 2 * size);
+                        ctx.fillRect(ex + 20 + offsetX, ey + 2 + offsetY, 2 * size, 2 * size);
+                        if (size > 1.0) {
+                            ctx.fillRect(ex + 18 + offsetX, ey + offsetY, 2 * size, 2 * size);
+                        }
+                    } else {
+                        ctx.fillRect(ex + 6 + offsetX, ey + 2 + offsetY, 2 * size, 2 * size);
+                        ctx.fillRect(ex + 10 + offsetX, ey + 2 + offsetY, 2 * size, 2 * size);
+                        if (size > 1.0) {
+                            ctx.fillRect(ex + 8 + offsetX, ey + offsetY, 2 * size, 2 * size);
+                        }
+                    }
+                    
+                    // Flügel
+                    ctx.fillStyle = bodyColor;
+                    ctx.globalAlpha = 0.7;
+                    ctx.fillRect(ex + 6 + offsetX, ey + 6 + offsetY, 4 * size, 2 * size);
+                    ctx.fillRect(ex + 4 + offsetX, ey + 8 + offsetY, 4 * size, 2 * size);
+                    ctx.fillRect(ex + 16 + offsetX, ey + 6 + offsetY, 4 * size, 2 * size);
+                    ctx.fillRect(ex + 16 + offsetX, ey + 8 + offsetY, 4 * size, 2 * size);
+                    ctx.globalAlpha = 1.0;
+                    
+                    // Schwanz
+                    ctx.fillStyle = bodyColor;
+                    if (facing > 0) {
+                        ctx.fillRect(ex + offsetX, ey + 12 + offsetY, 4 * size, 4 * size);
+                        ctx.fillRect(ex - 2 + offsetX, ey + 14 + offsetY, 2 * size, 2 * size);
+                    } else {
+                        ctx.fillRect(ex + 20 + offsetX, ey + 12 + offsetY, 4 * size, 4 * size);
+                        ctx.fillRect(ex + 24 + offsetX, ey + 14 + offsetY, 2 * size, 2 * size);
+                    }
+                    
+                    // Beine
+                    ctx.fillStyle = detailColor;
+                    ctx.fillRect(ex + 6 + offsetX, ey + 20 + offsetY, 3 * size, 4 * size);
+                    ctx.fillRect(ex + 15 + offsetX, ey + 20 + offsetY, 3 * size, 4 * size);
+                    
+                    // Health Bar
+                    if (enemy.health < enemy.maxHealth) {
+                        const barWidth = 24;
+                        const barHeight = 3;
+                        const barX = ex;
+                        const barY = ey - 6;
+                        
+                        ctx.fillStyle = '#000';
+                        ctx.fillRect(barX, barY, barWidth, barHeight);
+                        ctx.fillStyle = '#FF0000';
+                        ctx.fillRect(barX + 1, barY + 1, (barWidth - 2) * (enemy.health / enemy.maxHealth), barHeight - 2);
+                    }
+                }
+            });
+        }
+        
+        function drawProjectiles() {
+            projectiles.forEach(proj => {
+                if (!proj.active) return;
+                
+                ctx.save();
+                ctx.translate(proj.x + proj.width/2, proj.y + proj.height/2);
+                ctx.rotate(proj.rotation * Math.PI / 180);
+                
+                // Ninja-Stern (Shuriken)
+                ctx.fillStyle = '#C0C0C0';
+                // Kreuzform
+                ctx.fillRect(-6, -2, 12, 4); // Horizontal
+                ctx.fillRect(-2, -6, 4, 12); // Vertikal
+                // Diagonalen
+                ctx.fillRect(-4, -4, 8, 2);
+                ctx.fillRect(-4, 2, 8, 2);
+                
+                ctx.restore();
+            });
+        }
+        
+        function drawGround() {
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(ground.x, ground.y, ground.width, ground.height);
+            ctx.fillStyle = '#228B22';
+            for (let i = 0; i < ground.width; i += 8) {
+                ctx.fillRect(i, ground.y - 4, 8, 4);
+            }
+            
+            // Draw pits (Gruben)
+            pits.forEach(pit => {
+                // Schwarze Grube
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(pit.x, pit.y, pit.width, pit.height);
+                
+                // Lava-Effekt (optional)
+                ctx.fillStyle = '#FF4500';
+                for (let i = 0; i < pit.width; i += 8) {
+                    ctx.fillRect(pit.x + i, pit.y + pit.height - 10, 4, 10);
+                }
+                ctx.fillStyle = '#FF6347';
+                for (let i = 4; i < pit.width; i += 8) {
+                    ctx.fillRect(pit.x + i, pit.y + pit.height - 8, 4, 8);
+                }
+            });
+        }
+        
+        function drawPlatforms() {
+            ctx.fillStyle = '#8B4513';
+            platforms.forEach(platform => {
+                ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+                ctx.fillStyle = '#228B22';
+                for (let i = platform.x; i < platform.x + platform.width; i += 8) {
+                    ctx.fillRect(i, platform.y - 4, 8, 4);
+                }
+            });
+        }
+        
+        function drawBackground() {
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(1, '#98D8E8');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#ffffff';
+            drawCloud(100, 50);
+            drawCloud(400, 80);
+            drawCloud(650, 40);
+        }
+        
+        function drawCloud(x, y) {
+            ctx.fillRect(x, y, 8, 4);
+            ctx.fillRect(x - 4, y + 4, 16, 4);
+            ctx.fillRect(x, y + 8, 8, 4);
+        }
+        
+        // Main Game Loop
+        function gameLoop() {
+            if (!game.running) return;
+            
+            updatePlayer();
+            updateCoins();
+            updateProjectiles(); // Ninja Wurfsterne
+            updateEnemies();
+            checkLevelComplete();
+            
+            drawBackground();
+            drawGround();
+            drawPlatforms();
+            drawCoins();
+            drawProjectiles(); // Ninja Wurfsterne zeichnen
+            drawEnemies();
+            drawPlayer();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Start Game mit Charakter
+        function startGame(type) {
+            selectedCharacter = type;
+            const char = characterTypes[type];
+            
+            // Update player stats
+            player.color = char.color;
+            player.speed = char.speed;
+            player.jumpPower = char.jumpPower;
+            player.attackRange = char.attackRange;
+            player.attackDuration = char.attackDuration;
+            
+            // Hide character select
+            document.getElementById('characterSelect').style.display = 'none';
+            
+            // Start game
+            game.running = true;
+            initGround();
+            loadLevel(1);
+            gameLoop();
+        }
+        
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Next Level Button
+            document.getElementById('nextLevelBtn').addEventListener('click', function() {
+                nextLevel();
+            });
+        });
+        
+        // Next Level Function
+        function nextLevel() {
+            document.getElementById('levelComplete').style.display = 'none';
+            game.currentLevel++;
+            loadLevel(game.currentLevel);
+            gameLoop();
+        }
+    </script>
+</body>
+</html>
