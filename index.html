@@ -639,29 +639,28 @@
         
         // Responsive Canvas Setup
         function resizeCanvas() {
-            const container = document.querySelector('.game-container');
-            const maxWidth = window.innerWidth - 20; // 10px padding each side
-            const maxHeight = window.innerHeight - 300; // Space for HUD and controls
-            const aspectRatio = 800 / 400; // 2:1 ratio
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             
-            let displayWidth = Math.min(800, maxWidth);
-            let displayHeight = displayWidth / aspectRatio;
-            
-            // If height is too big, scale based on height instead
-            if (displayHeight > maxHeight) {
-                displayHeight = maxHeight;
-                displayWidth = displayHeight * aspectRatio;
+            if (isMobile) {
+                // MOBILE: Nutze fast die volle Bildschirmbreite
+                const displayWidth = Math.min(window.innerWidth - 20, 800);
+                const displayHeight = displayWidth / 2; // 2:1 Aspect Ratio
+                
+                canvas.style.width = displayWidth + 'px';
+                canvas.style.height = displayHeight + 'px';
+                
+                console.log('MOBILE Canvas:', displayWidth, 'x', displayHeight);
+            } else {
+                // DESKTOP: Normale Größe
+                canvas.style.width = '800px';
+                canvas.style.height = '400px';
+                
+                console.log('DESKTOP Canvas: 800x400');
             }
             
-            // Set CSS display size (what the user sees)
-            canvas.style.width = displayWidth + 'px';
-            canvas.style.height = displayHeight + 'px';
-            
-            // Keep internal resolution at 800x400 for consistent gameplay
+            // Interne Auflösung bleibt gleich
             canvas.width = 800;
             canvas.height = 400;
-            
-            console.log('Canvas resized - Display:', displayWidth, 'x', displayHeight, 'Internal: 800x400');
         }
         
         // Initial resize
@@ -670,7 +669,7 @@
         // Resize on window resize and orientation change
         window.addEventListener('resize', resizeCanvas);
         window.addEventListener('orientationchange', () => {
-            setTimeout(resizeCanvas, 100); // Small delay for orientation change
+            setTimeout(resizeCanvas, 100);
         });
         
         // Character Types
